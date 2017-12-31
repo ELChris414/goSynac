@@ -1,88 +1,31 @@
- 
-file:///home/elchris414/go/src/github.com/elchris414/goSchmic/generals.go
 package main
 
 import "github.com/spacemonkeygo/openssl"
 
 // Constants
 const defaultPort = 8439
-const limitUserName = 128
+const typingTimeout = 10
 const limitChannelName = 128
-const limitAttrName = 128
-const limitAttrAmount = 2048
+const limitUserName = 128
 const limitMessage = 16384
 
-const limitMessageList = 64
+const limitBulk = 64
 
-const errAttrInvalidPos = 1
-const errAttrLockedName = 2
-const errLimitReached = 4
-const errLoginBanned = 5
-const errLoginBot = 6
-const errLoginInvalid = 7
-const errMaxConnPerIP = 8
-const errMissingField = 9
-const errMissingPermission = 10
-const errNameTaken = 11
-const errUnknownChannel = 12
-const errUnknownGroup = 13
-const errUnknownMessage = 14
-const errUnknownUser = 15
+var synacErrors = make(map[int8]string)
+var packets = make(map[int8]string)
+var rpackets = make(map[string]int)
 
-const close = 0
-const err = 1
-const rateLimit = 2
-const statusLogin = 3
-const attributeCreate = 4
-const attributeUpdate = 5
-const attributeDelete = 6
-const channelCreate = 7
-const channelUpdate = 8
-const channelDelete = 9
-const messageList = 10
-const messageCreate = 11
-const messageUpdate = 12
-const messageDelete = 13
-const command = 14
-const userUpdate = 15
-const loginUpdate = 16
-const loginSuccess = 17
-const userReceive = 18
-const attributeReceive = 19
-const attributeDeleteReceive = 20
-const channelReceive = 21
-const channelDeleteReceive = 22
-const messageReceive = 23
-const messageDeleteReceive = 24
-const commandReceive = 25
+// TODO PERMISSIONS
 
-// Attribute attributes in Schmic
-type Attribute struct {
-	Allow uint8
-	Deny  uint8
-	ID    uintptr
-	Name  string
-	Pos   uintptr
-}
-
-// User users in Schmic
-type User struct {
-	Attributes []uintptr
-	Bot        bool
-	ID         uintptr
-	Name       string
-	Nick       string
-}
-
-// Channel channels in Schmic
+// Channel stores a channel
 type Channel struct {
-	allow []uintptr
-	deny  []uintptr
-	id    uintptr
-	name  string
+	defaultModeBot  uint8
+	defaultModeUser uint8
+	id              uintptr
+	name            string
 }
 
-// Message messages in Schmic
+// Message stores a message
 type Message struct {
 	author        uintptr
 	channel       uintptr
@@ -92,52 +35,63 @@ type Message struct {
 	timestampEdit int64
 }
 
-// Packets
-
-// Login packet in Schmic
-type Login struct {
-	Bot      bool
-	Name     string
-	Password string
-	Token    string
-}
-
-// AttributeCreate AttributeCreate
-type AttributeCreate struct {
-	allow uint8
-	deny  uint8
+// User stores a user
+type User struct {
+	admin bool
+	ban   bool
+	bot   bool
+	id    uintptr
+	nodes map[uintptr]uint8
 	name  string
-	pos   uintptr
 }
 
-// AttributeUpdate AttributeUpdate
-type AttributeUpdate struct {
-	inner Attribute
+type ChannelCreate struct {
+	defaultModeBot  uint8
+	defaultModeUser uint8
+	name            string
 }
 
-// AttributeDelete AttributeDelete
-type AttributeDelete struct {
+type ChannelDelete struct {
 	id uintptr
 }
 
-// ChannelCreate ChannelCreate
-type ChannelCreate struct {
-	allow []uintptr
-	deny  []uintptr
-	name  string
-}
-
-// ChannelUpdate ChannelUpdate
 type ChannelUpdate struct {
 	inner Channel
 }
 
-// ChannelDelete ChannelDelete
-type ChannelDelete struct {
-	channel uintptr
+type Command struct {
+	args      []string
+	recipient uintptr
 }
 
-// MessageList MessageList
+type Login struct {
+	bot      bool
+	name     string
+	password string
+	token    string
+}
+
+type LoginUpdate struct {
+	name             string
+	password_current string
+	password_new     string
+	reset_token      bool
+}
+
+type MessageCreate struct {
+	channel uintptr
+	text    []uint8
+}
+
+type MessageDelete struct {
+	id uintptr
+}
+
+type MessageDeleteBulk struct {
+	channel uintptr
+	ids     []uintptr
+}
+
 type MessageList struct {
 	after   uintptr
 	before  uintptr
@@ -145,59 +99,85 @@ type MessageList struct {
 	limit   uintptr
 }
 
-// MessageCreate MessageCreate
-type MessageCreate struct {
-	channel uintptr
-	text    []uint8
-}
-
-// MessageUpdate MessageUpdate
 type MessageUpdate struct {
 	id   uintptr
 	text []uint8
 }
 
-// MessageDelete MessageDelete
-type MessageDelete struct {
-	id uintptr
-}
-
-// Command Command
-type Command struct {
-	author    uintptr
-	parts     []string
+type PrivateMessage struct {
+	text      []uint8
 	recipient uintptr
 }
 
-// Close Close
-type Close struct{}
-
-// MessageReceive is an event handler
-type MessageReceive struct {
-	*Message
-	new bool
+type Typing struct {
+	channel uintptr
 }
 
-// MessageDeleteReceive is an event handler
+type UserUpdate struct {
+	admin       bool
+	ban         bool
+	channelMode map[uintptr]uint8 // may be wrong
+	id          uintptr
+}
+
+type ChannelDeleteReceive struct {
+	inner Channel
+}
+
+type ChannelReceive struct {
+	inner Channel
+}
+
+type CommmandReceive struct {
+	args   []string
+	author uintptr
+}
+
+type LoginSuccess struct {
+	created bool
+	id      uintptr
+	token   string
+}
+
 type MessageDeleteReceive struct {
 	id uintptr
 }
 
-// Handlers is a struct that stores handlers
-type Handlers struct {
-	status int
-	MR     []func(SchmicSession, MessageReceive)
-	MDR    []func(SchmicSession, MessageDeleteReceive)
+type MessageReceive struct {
+	inner Message
+	new   bool
 }
 
-// SchmicSession A session for the Schmic chat
-type SchmicSession struct {
-	Attributes map[uintptr]Attribute
-	Channel    uintptr
-	Channels   map[uintptr]Channel
-	ID         uintptr
-	Users      map[uintptr]User
-	Stream     *openssl.Conn
+type PMreceive struct {
+	author uintptr
+	text   []uint8
+}
+
+type TypingReceive struct {
+	author  uintptr
+	channel uintptr
+}
+
+type UserReceive struct {
+	inner User
+}
+
+// Handlers stores handlers
+type Handlers struct {
+	status int
+	MR     []func(Session, MessageReceive)
+	MDR    []func(Session, MessageDeleteReceive)
+	UR     []func(Session, UserReceive)
+	CR     []func(Session, ChannelReceive)
+}
+
+// Session A session for the Synac chat
+type Session struct {
+	Channel  uintptr
+	Channels map[uintptr]Channel
+	ID       uintptr
+	Users    map[uintptr]User
+	stream   *openssl.Conn
 	Handlers
 }
 
@@ -212,96 +192,62 @@ type Wrapper struct {
 	Content Wrapping
 }
 
-func findError(err int8) (errS string) {
-	switch err {
-	case errAttrInvalidPos:
-		errS = "ERR_ATTR_INVALID_POS"
-	case errAttrLockedName:
-		errS = "ERR_ATTR_LOCKED_NAME"
-	case errLimitReached:
-		errS = "ERR_LIMIT_REACHED"
-	case errLoginBanned:
-		errS = "ERR_LOGIN_BANNED"
-	case errLoginBot:
-		errS = "ERR_LOGIN_BOT"
-	case errLoginInvalid:
-		errS = "ERR_LOGIN_INVALID"
-	case errMaxConnPerIP:
-		errS = "ERR_MAX_CONN_PER_IP"
-	case errMissingField:
-		errS = "ERR_MISSING_FIELD"
-	case errMissingPermission:
-		errS = "ERR_MISSING_PERMISSION"
-	case errUnknownGroup:
-		errS = "ERR_UNKNOWN_GROUP"
-	case errUnknownChannel:
-		errS = "ERR_UNKNOWN_CHANNEL"
-	case errUnknownMessage:
-		errS = "ERR_UNKNOWN_MESSAGE"
-	case errUnknownUser:
-		errS = "ERR_UNKNOWN_USER"
-	case errNameTaken:
-		errS = "ERR_NAME_TAKEN"
-	case errInvalidChannel:
-		errS = "ERR_INVALID_CHANNEL"
-	default:
-		errS = "ERR_UKNOWN_ERR"
+func initialize() {
+	// ERRORS
+	synacErrors[1] = "ERR_LIMIT_REACHED"
+	synacErrors[2] = "ERR_LOGIN_BANNED"
+	synacErrors[3] = "ERR_LOGIN_BOT"
+	synacErrors[4] = "ERR_LOGIN_INVALID"
+	synacErrors[5] = "ERR_MAX_CONN_PER_IP"
+	synacErrors[6] = "ERR_MISSING_FIELD"
+	synacErrors[7] = "ERR_MISSING_PERMISSION"
+	synacErrors[8] = "ERR_NAME_TAKEN"
+	synacErrors[9] = "ERR_UNKNOWN_BOT"
+	synacErrors[10] = "ERR_UNKNOWN_CHANNEL"
+	synacErrors[11] = "ERR_UNKNOWN_MESSAGE"
+	synacErrors[12] = "ERR_UNKNOWN_USER"
+
+	// PACKETS
+	rpackets["close"] = 0
+	rpackets["err"] = 1
+	rpackets["rateLimit"] = 2
+	rpackets["channelCreate"] = 3
+	rpackets["channelDelete"] = 4
+	rpackets["channelUpdate"] = 5
+	rpackets["command"] = 6
+	rpackets["login"] = 7
+	rpackets["loginUpdate"] = 8
+	rpackets["messageCreate"] = 9
+	rpackets["messageDelete"] = 10
+	rpackets["messageDeleteBulk"] = 11
+	rpackets["messageList"] = 12
+	rpackets["messageUpdate"] = 13
+	rpackets["privateMessage"] = 14
+	rpackets["typing"] = 15
+	rpackets["userUpdate"] = 16
+
+	rpackets["channelDeleteReceive"] = 17
+	rpackets["channelReceive"] = 18
+	rpackets["commandReceive"] = 19
+	rpackets["loginSuccess"] = 20
+	rpackets["messageDeleteReceive"] = 21
+	rpackets["messageListReceived"] = 22
+	rpackets["pmReceive"] = 23
+	rpackets["userReceive"] = 24
+
+	for k, v := range rpackets {
+		packets[int8(v)] = k
 	}
-	return
 }
 
-func findPacket(thing interface{}) (errS string) {
-	switch thing.(int8) {
-	case close:
-		errS = "close"
-	case err:
-		errS = "error"
-	case rateLimit:
-		errS = "rateLimit"
-	case attributeCreate:
-		errS = "attributeCreate"
-	case attributeDelete:
-		errS = "attributeDelete"
-	case attributeUpdate:
-		errS = "attributeUpdate"
-	case channelCreate:
-		errS = "channelCreate"
-	case channelUpdate:
-		errS = "channelUpdate"
-	case channelDelete:
-		errS = "channelDelete"
-	case messageList:
-		errS = "messageList"
-	case messageCreate:
-		errS = "messageCreate"
-	case messageUpdate:
-		errS = "messageUpdate"
-	case messageDelete:
-		errS = "messageDelete"
-	case command:
-		errS = "command"
-	case userUpdate:
-		errS = "userUpdate"
-	case loginUpdate:
-		errS = "loginUpdate"
-	case loginSuccess:
-		errS = "loginSuccess"
-	case userReceive:
-		errS = "userReceive"
-	case attributeReceive:
-		errS = "attributeReceive"
-	case attributeDeleteReceive:
-		errS = "attributeDeleteReceive"
-	case channelReceive:
-		errS = "channelReceive"
-	case channelDeleteReceive:
-		errS = "channelDeleteReceive"
-	case messageReceive:
-		errS = "messageReceive"
-	case messageDeleteReceive:
-		errS = "messageDeleteReceive"
-	case commandReceive:
-		errS = "commandReceive"
-	}
-	return
+func findError(err int8) string {
+	return synacErrors[err]
+}
+
+func findPacket(thing interface{}) string {
+	return packets[thing.(int8)]
+}
+
+func findRPacket(packet string) int {
+	return rpackets[packet]
 }

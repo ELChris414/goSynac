@@ -1,4 +1,3 @@
-file:///home/elchris414/go/src/github.com/elchris414/goSchmic/goSchmic.go
 package main
 
 import (
@@ -15,8 +14,9 @@ import (
 	"github.com/vmihailenco/msgpack"
 )
 
-// CreateSession Creates an SchmicSession
-func CreateSession(ip string, securityString string) (session SchmicSession, err error) {
+// CreateSession Creates an goSynac.Session
+func CreateSession(ip string, securityString string) (session Session, err error) {
+	initialize()
 	IP := net.ParseIP(ip)
 	if IP != nil {
 		err = errors.New("Invalid IP")
@@ -58,21 +58,21 @@ func CreateSession(ip string, securityString string) (session SchmicSession, err
 		return
 	}
 
-	session.Stream = conn
+	session.stream = conn
 	session.Handlers.status = 0
 	return
 }
 
-func (session SchmicSession) listen() (output []interface{}, err error) {
+func (session Session) listen() (output []interface{}, err error) {
 	twoBytes := make([]byte, 2)
-	_, err = session.Stream.Read(twoBytes)
+	_, err = session.stream.Read(twoBytes)
 	if err != nil {
 		err = errors.New("Reading from stream failed, " + err.Error())
 		return
 	}
 	size := binary.BigEndian.Uint16(twoBytes)
 	inputBytes := make([]byte, size)
-	_, err = session.Stream.Read(inputBytes)
+	_, err = session.stream.Read(inputBytes)
 	if err != nil {
 		err = errors.New("Reading from stream failed, " + err.Error())
 		return
@@ -85,7 +85,7 @@ func (session SchmicSession) listen() (output []interface{}, err error) {
 	return
 }
 
-func (session *SchmicSession) liveRunner() {
+func (session *Session) liveRunner() {
 	if session.Handlers.status > 0 {
 		data, err := session.listen()
 		if err != nil {
@@ -95,61 +95,54 @@ func (session *SchmicSession) liveRunner() {
 		case "error":
 			err = errors.New(findError(data[1].([]interface{})[0].(int8)))
 			panic(err)
-		case "attributeReceive":
-			deeper := data[1].([]interface{})[0].([]interface{})
-			allow, _ := deeper[0].(uint8)
-			deny, _ := deeper[1].(uint8)
-			id, _ := deeper[2].(uintptr)
-			name := deeper[3].(string)
-			pos, _ := deeper[4].(uintptr)
-			session.Attributes[id] = Attribute{
-				Allow: allow,
-				Deny:  deny,
-				ID:    id,
-				Name:  name,
-				Pos:   pos,
-			}
 		case "userReceive":
 			deeper := data[1].([]interface{})[0].([]interface{})
-			evenDeeper := deeper
-			attributes, _ := deeper[0].([]uintptr)
-			bot := deeper[1].(bool)
-			id, _ := deeper[2].(uintptr)
-			name := deeper[3].(string)
-			nick, _ := deeper[4].(string)
+			admin, _ := deeper[0].(bool)
+			ban, _ := deeper[1].(bool)
+			bot, _ := deeper[2].(bool)
+			id, _ := deeper[3].(uintptr)
+			nodes, _ := deeper[4].(map[uintptr]uint8)
+			name, _ := deeper[5].(string)
 			session.Users[id] = User{
-				Attributes: attributes,
-				Bot:        bot,
-				ID:         id,
-				Name:       name,
-				Nick:       nick,
+				admin: admin,
+				ban:   ban,
+				bot:   bot,
+				id:    id,
+				nodes: nodes,
+				name:  name,
 			}
 		}
 		fmt.Println(data)
 	}
 }
 
-// Close closes an SchmicSession
-func (session SchmicSession) Close() {
-	session.Stream.Close()
+// Close closes an Session
+func (session Session) Close() {
+	session.stream.Close()
 }
 
 // AddHandler adds a handler
-func (session *SchmicSession) AddHandler(handler interface{}) error {
+func (session *Session) AddHandler(handler interface{}) error {
 	var err error
 	switch handler.(type) {
-	case func(SchmicSession, MessageReceive):
-		handler := handler.(func(SchmicSession, MessageReceive))
+	case func(Session, MessageReceive):
+		handler := handler.(func(Session, MessageReceive))
 		session.Handlers.MR = append(session.Handlers.MR, handler)
-	case func(SchmicSession, MessageDeleteReceive):
-		handler := handler.(func(SchmicSession, MessageDeleteReceive))
+	case func(Session, MessageDeleteReceive):
+		handler := handler.(func(Session, MessageDeleteReceive))
 		session.Handlers.MDR = append(session.Handlers.MDR, handler)
+	case func(Session, UserReceive):
+		handler := handler.(func(Session, UserReceive))
+		session.Handlers.UR = append(session.Handlers.UR, handler)
+	case func(Session, ChannelReceive):
+		handler := handler.(func(Session, ChannelReceive))
+		session.Handlers.CR = append(session.Handlers.CR, handler)
 	}
 	return err
 }
 
-// Write writes bytes in an SchmicSession
-func (session SchmicSession) Write(input []byte) (written int, err error) {
+// Write writes bytes in an Session
+func (session Session) Write(input []byte) (written int, err error) {
 	size := len(input)
 	if size > math.MaxUint16 {
 		err = errors.New("packet too large")
@@ -157,12 +150,12 @@ func (session SchmicSession) Write(input []byte) (written int, err error) {
 	}
 	writable := make([]byte, 2)
 	binary.BigEndian.PutUint16(writable[0:], uint16(size))
-	written, err = session.Stream.Write(writable)
+	written, err = session.stream.Write(writable)
 	if err != nil {
 		err = errors.New("writing error" + err.Error())
 		return
 	}
-	written, err = session.Stream.Write(input)
+	written, err = session.stream.Write(input)
 	if err != nil {
 		err = errors.New("writing error" + err.Error())
 		return
@@ -174,15 +167,15 @@ func packIt(structy interface{}, typey int) Wrapper {
 	return Wrapper{typey, Wrapping{structy}}
 }
 
-// Login logs you in Schmic
-func (session *SchmicSession) Login(bot bool, name string, password string, token string) (tokenO string, created bool, err error) {
+// Login logs you in Synac
+func (session *Session) Login(bot bool, name string, password string, token string) (tokenO string, created bool, err error) {
 	lg := Login{
-		Bot:      bot,
-		Name:     name,
-		Password: password,
-		Token:    token,
+		bot:      bot,
+		name:     name,
+		password: password,
+		token:    token,
 	}
-	packet := packIt(lg, login)
+	packet := packIt(lg, findRPacket("login"))
 	var buf bytes.Buffer
 	enc := msgpack.NewEncoder(&buf).StructAsArray(true)
 	err = enc.Encode(&packet)
@@ -213,4 +206,3 @@ func (session *SchmicSession) Login(bot bool, name string, password string, toke
 
 	return
 }
- 
