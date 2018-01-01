@@ -27,7 +27,7 @@ func main() {
 }
 
 func userListener(session *Session, received UserReceive) {
-	fmt.Println("I heard about a user called", received.inner.name)
+	fmt.Println("I heard about a user called", received.Inner.Name)
 }
 
 func userListenerTwo(session *Session, received UserReceive) {
@@ -35,5 +35,5 @@ func userListenerTwo(session *Session, received UserReceive) {
 }
 
 func channelListener(session *Session, received ChannelReceive) {
-	fmt.Println("I heard about a channel called", received.inner.name)
+	fmt.Println("I heard about a channel called", received.Inner.Name)
 }

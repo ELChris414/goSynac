@@ -19,147 +19,147 @@ var rpackets = make(map[string]int)
 
 // Channel stores a channel
 type Channel struct {
-	defaultModeBot  uint8
-	defaultModeUser uint8
-	id              uintptr
-	name            string
+	DefaultModeBot  uint8
+	DefaultModeUser uint8
+	ID              uintptr
+	Name            string
 }
 
 // Message stores a message
 type Message struct {
-	author        uintptr
-	channel       uintptr
-	id            uintptr
-	text          []uint8
-	timestamp     int64
-	timestampEdit int64
+	Author        uintptr
+	Channel       uintptr
+	I             uintptr
+	Text          []uint8
+	Timestamp     int64
+	TimestampEdit int64
 }
 
 // User stores a user
 type User struct {
-	admin bool
-	ban   bool
-	bot   bool
-	id    uintptr
-	nodes map[uintptr]uint8
-	name  string
+	Admin bool
+	Ban   bool
+	Bot   bool
+	ID    uintptr
+	Nodes map[uintptr]uint8
+	Name  string
 }
 
 type ChannelCreate struct {
-	defaultModeBot  uint8
-	defaultModeUser uint8
-	name            string
+	DefaultModeBot  uint8
+	DefaultModeUser uint8
+	Name            string
 }
 
 type ChannelDelete struct {
-	id uintptr
+	ID uintptr
 }
 
 type ChannelUpdate struct {
-	inner Channel
+	Inner Channel
 }
 
 type Command struct {
-	args      []string
-	recipient uintptr
+	Args      []string
+	Recipient uintptr
 }
 
 type Login struct {
-	bot      bool
-	name     string
-	password string
-	token    string
+	Bot      bool
+	Name     string
+	Password string
+	Token    string
 }
 
 type LoginUpdate struct {
-	name             string
-	password_current string
-	password_new     string
-	reset_token      bool
+	Name             string
+	Password_current string
+	Password_new     string
+	Reset_token      bool
 }
 
 type MessageCreate struct {
-	channel uintptr
-	text    []uint8
+	Channel uintptr
+	Text    []uint8
 }
 
 type MessageDelete struct {
-	id uintptr
+	ID uintptr
 }
 
 type MessageDeleteBulk struct {
-	channel uintptr
-	ids     []uintptr
+	Channel uintptr
+	IDs     []uintptr
 }
 
 type MessageList struct {
-	after   uintptr
-	before  uintptr
-	channel uintptr
-	limit   uintptr
+	After   uintptr
+	Before  uintptr
+	Channel uintptr
+	Limit   uintptr
 }
 
 type MessageUpdate struct {
-	id   uintptr
-	text []uint8
+	ID   uintptr
+	Text []uint8
 }
 
 type PrivateMessage struct {
-	text      []uint8
-	recipient uintptr
+	Text      []uint8
+	Recipient uintptr
 }
 
 type Typing struct {
-	channel uintptr
+	Channel uintptr
 }
 
 type UserUpdate struct {
-	admin       bool
-	ban         bool
-	channelMode map[uintptr]uint8 // may be wrong
-	id          uintptr
+	Admin       bool
+	Ban         bool
+	ChannelMode map[uintptr]uint8 // may be wrong
+	ID          uintptr
 }
 
 type ChannelDeleteReceive struct {
-	inner Channel
+	Inner Channel
 }
 
 type ChannelReceive struct {
-	inner Channel
+	Inner Channel
 }
 
 type CommmandReceive struct {
-	args   []string
-	author uintptr
+	Args   []string
+	Author uintptr
 }
 
 type LoginSuccess struct {
-	created bool
-	id      uintptr
-	token   string
+	Created bool
+	ID      uintptr
+	Token   string
 }
 
 type MessageDeleteReceive struct {
-	id uintptr
+	ID uintptr
 }
 
 type MessageReceive struct {
-	inner Message
-	new   bool
+	Inner Message
+	New   bool
 }
 
 type PMreceive struct {
-	author uintptr
-	text   []uint8
+	Author uintptr
+	Text   []uint8
 }
 
 type TypingReceive struct {
-	author  uintptr
-	channel uintptr
+	Author  uintptr
+	Channel uintptr
 }
 
 type UserReceive struct {
-	inner User
+	Inner User
 }
 
 // Handlers stores handlers

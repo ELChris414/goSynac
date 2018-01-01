@@ -103,15 +103,15 @@ func (session *Session) liveRunner() {
 			nodes, _ := deeper[4].(map[uintptr]uint8)
 			name, _ := deeper[5].(string)
 			session.Users[id] = User{
-				admin: admin,
-				ban:   ban,
-				bot:   bot,
-				id:    id,
-				nodes: nodes,
-				name:  name,
+				Admin: admin,
+				Ban:   ban,
+				Bot:   bot,
+				ID:    id,
+				Nodes: nodes,
+				Name:  name,
 			}
 			structy := UserReceive{
-				inner: session.Users[id],
+				Inner: session.Users[id],
 			}
 			session.runHandler("UR", structy)
 		}
@@ -187,10 +187,10 @@ func packIt(structy interface{}, typey int) Wrapper {
 // Login logs you in Synac
 func (session *Session) Login(bot bool, name string, password string, token string) (tokenO string, created bool, err error) {
 	lg := Login{
-		bot:      bot,
-		name:     name,
-		password: password,
-		token:    token,
+		Bot:      bot,
+		Name:     name,
+		Password: password,
+		Token:    token,
 	}
 	packet := packIt(lg, findRPacket("login"))
 	fmt.Println(packet)
