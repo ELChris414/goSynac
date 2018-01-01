@@ -165,10 +165,10 @@ type UserReceive struct {
 // Handlers stores handlers
 type Handlers struct {
 	status int
-	MR     []func(Session, MessageReceive)
-	MDR    []func(Session, MessageDeleteReceive)
-	UR     []func(Session, UserReceive)
-	CR     []func(Session, ChannelReceive)
+	MR     []func(*Session, MessageReceive)
+	MDR    []func(*Session, MessageDeleteReceive)
+	UR     []func(*Session, UserReceive)
+	CR     []func(*Session, ChannelReceive)
 }
 
 // Session A session for the Synac chat
@@ -181,7 +181,7 @@ type Session struct {
 	Handlers
 }
 
-// Wrapping because Go REALLY sucks
+// Wrapping because Go really sucks
 type Wrapping struct {
 	Content interface{}
 }

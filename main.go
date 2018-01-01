@@ -5,7 +5,7 @@ import (
 )
 
 func main() {
-	S, err := CreateSession("krake.one", "C9F6251FA50892B3877ACECA523ACFD925CAA7D9FA245D9C50DD00083A39F199")
+	S, err := CreateSession("localhost", "F679DA7AB592526074C275591DC741068A150A5F00602813B52412C32D9D9D4C")
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -26,14 +26,14 @@ func main() {
 	}
 }
 
-func userListener(session Session, received UserReceive) {
+func userListener(session *Session, received UserReceive) {
 	fmt.Println("I heard about a user called", received.inner.name)
 }
 
-func userListenerTwo(session Session, received UserReceive) {
+func userListenerTwo(session *Session, received UserReceive) {
 	fmt.Println("Can confirm that!")
 }
 
-func channelListener(session Session, received ChannelReceive) {
+func channelListener(session *Session, received ChannelReceive) {
 	fmt.Println("I heard about a channel called", received.inner.name)
 }
