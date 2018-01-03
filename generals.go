@@ -120,6 +120,8 @@ type UserUpdate struct {
 	ID          uintptr
 }
 
+// SERVER PACKETS
+
 type ChannelDeleteReceive struct {
 	Inner Channel
 }
@@ -146,11 +148,6 @@ type MessageDeleteReceive struct {
 type MessageReceive struct {
 	Inner Message
 	New   bool
-}
-
-type PMreceive struct {
-	Author uintptr
-	Text   []uint8
 }
 
 type TypingReceive struct {
