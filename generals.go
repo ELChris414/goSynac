@@ -11,8 +11,8 @@ const limitMessage = 16384
 
 const limitBulk = 64
 
-var synacErrors = make(map[int8]string)
-var packets = make(map[int8]string)
+var synacErrors = make(map[int]string)
+var packets = make(map[int]string)
 var rpackets = make(map[string]int)
 
 // TODO PERMISSIONS
@@ -194,18 +194,19 @@ type Wrapper struct {
 
 func initialize() {
 	// ERRORS
-	synacErrors[1] = "ERR_LIMIT_REACHED"
-	synacErrors[2] = "ERR_LOGIN_BANNED"
-	synacErrors[3] = "ERR_LOGIN_BOT"
-	synacErrors[4] = "ERR_LOGIN_INVALID"
-	synacErrors[5] = "ERR_MAX_CONN_PER_IP"
-	synacErrors[6] = "ERR_MISSING_FIELD"
-	synacErrors[7] = "ERR_MISSING_PERMISSION"
-	synacErrors[8] = "ERR_NAME_TAKEN"
-	synacErrors[9] = "ERR_UNKNOWN_BOT"
-	synacErrors[10] = "ERR_UNKNOWN_CHANNEL"
-	synacErrors[11] = "ERR_UNKNOWN_MESSAGE"
-	synacErrors[12] = "ERR_UNKNOWN_USER"
+	synacErrors[1] = "ERR_ALREADY_EXISTS"
+	synacErrors[2] = "ERR_LIMIT_REACHED"
+	synacErrors[3] = "ERR_LOGIN_BANNED"
+	synacErrors[4] = "ERR_LOGIN_BOT"
+	synacErrors[5] = "ERR_LOGIN_INVALID"
+	synacErrors[6] = "ERR_MAX_CONN_PER_IP"
+	synacErrors[7] = "ERR_MISSING_FIELD"
+	synacErrors[8] = "ERR_MISSING_PERMISSION"
+	synacErrors[9] = "ERR_SLEF_PM"
+	synacErrors[10] = "ERR_UNKNOWN_BOT"
+	synacErrors[11] = "ERR_UNKNOWN_CHANNEL"
+	synacErrors[12] = "ERR_UNKNOWN_MESSAGE"
+	synacErrors[13] = "ERR_UNKNOWN_USER"
 
 	// PACKETS
 	rpackets["close"] = 0
@@ -232,20 +233,21 @@ func initialize() {
 	rpackets["loginSuccess"] = 20
 	rpackets["messageDeleteReceive"] = 21
 	rpackets["messageListReceived"] = 22
-	rpackets["pmReceive"] = 23
-	rpackets["userReceive"] = 24
+	rpackets["messageReceive"] = 23
+	rpackets["typingReceive"] = 24
+	rpackets["userReceive"] = 25
 
 	for k, v := range rpackets {
-		packets[int8(v)] = k
+		packets[v] = k
 	}
 }
 
-func findError(err int8) string {
-	return synacErrors[err]
+func findError(err interface{}) string {
+	return synacErrors[err.(int)]
 }
 
 func findPacket(thing interface{}) string {
-	return packets[thing.(int8)]
+	return packets[thing.(int)]
 }
 
 func findRPacket(packet string) int {
