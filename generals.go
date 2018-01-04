@@ -191,48 +191,47 @@ type Wrapper struct {
 
 func initialize() {
 	// ERRORS
-	synacErrors[1] = "ERR_ALREADY_EXISTS"
-	synacErrors[2] = "ERR_LIMIT_REACHED"
-	synacErrors[3] = "ERR_LOGIN_BANNED"
-	synacErrors[4] = "ERR_LOGIN_BOT"
-	synacErrors[5] = "ERR_LOGIN_INVALID"
-	synacErrors[6] = "ERR_MAX_CONN_PER_IP"
-	synacErrors[7] = "ERR_MISSING_FIELD"
-	synacErrors[8] = "ERR_MISSING_PERMISSION"
-	synacErrors[9] = "ERR_SLEF_PM"
-	synacErrors[10] = "ERR_UNKNOWN_BOT"
-	synacErrors[11] = "ERR_UNKNOWN_CHANNEL"
-	synacErrors[12] = "ERR_UNKNOWN_MESSAGE"
-	synacErrors[13] = "ERR_UNKNOWN_USER"
+	synacErrors[0] = "ERR_ALREADY_EXISTS"
+	synacErrors[1] = "ERR_LIMIT_REACHED"
+	synacErrors[2] = "ERR_LOGIN_BANNED"
+	synacErrors[3] = "ERR_LOGIN_BOT"
+	synacErrors[4] = "ERR_LOGIN_INVALID"
+	synacErrors[5] = "ERR_MAX_CONN_PER_IP"
+	synacErrors[6] = "ERR_MISSING_FIELD"
+	synacErrors[7] = "ERR_MISSING_PERMISSION"
+	synacErrors[8] = "ERR_SLEF_PM"
+	synacErrors[9] = "ERR_UNKNOWN_BOT"
+	synacErrors[10] = "ERR_UNKNOWN_CHANNEL"
+	synacErrors[11] = "ERR_UNKNOWN_MESSAGE"
+	synacErrors[12] = "ERR_UNKNOWN_USER"
 
 	// PACKETS
-	rpackets["close"] = 0
-	rpackets["err"] = 1
-	rpackets["rateLimit"] = 2
-	rpackets["channelCreate"] = 3
-	rpackets["channelDelete"] = 4
-	rpackets["channelUpdate"] = 5
-	rpackets["command"] = 6
-	rpackets["login"] = 7
-	rpackets["loginUpdate"] = 8
-	rpackets["messageCreate"] = 9
-	rpackets["messageDelete"] = 10
-	rpackets["messageDeleteBulk"] = 11
-	rpackets["messageList"] = 12
-	rpackets["messageUpdate"] = 13
-	rpackets["privateMessage"] = 14
-	rpackets["typing"] = 15
-	rpackets["userUpdate"] = 16
+	rpackets["err"] = 0
+	rpackets["rateLimit"] = 1
+	rpackets["channelCreate"] = 2
+	rpackets["channelDelete"] = 3
+	rpackets["channelUpdate"] = 4
+	rpackets["command"] = 5
+	rpackets["login"] = 6
+	rpackets["loginUpdate"] = 7
+	rpackets["messageCreate"] = 8
+	rpackets["messageDelete"] = 9
+	rpackets["messageDeleteBulk"] = 10
+	rpackets["messageList"] = 11
+	rpackets["messageUpdate"] = 12
+	rpackets["privateMessage"] = 13
+	rpackets["typing"] = 14
+	rpackets["userUpdate"] = 15
 
-	rpackets["channelDeleteReceive"] = 17
-	rpackets["channelReceive"] = 18
+	rpackets["channelDeleteReceive"] = 16
+	rpackets["channelReceive"] = 17
 	rpackets["commandReceive"] = 19
-	rpackets["loginSuccess"] = 20
-	rpackets["messageDeleteReceive"] = 21
-	rpackets["messageListReceived"] = 22
-	rpackets["messageReceive"] = 23
-	rpackets["typingReceive"] = 24
-	rpackets["userReceive"] = 25
+	rpackets["loginSuccess"] = 18
+	rpackets["messageDeleteReceive"] = 20
+	rpackets["messageListReceived"] = 21
+	rpackets["messageReceive"] = 22
+	rpackets["typingReceive"] = 23
+	rpackets["userReceive"] = 24
 
 	for k, v := range rpackets {
 		packets[v] = k
