@@ -20,7 +20,7 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println(token, "\nCreated:", created)
+	fmt.Println(token, "\nCreated:", created, "\nid:", S.ID)
 	for true {
 		S.liveRunner()
 	}

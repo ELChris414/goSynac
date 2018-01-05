@@ -47,8 +47,6 @@ func CreateSession(ip string, securityString string) (session Session, err error
 			return false
 		}
 		digestStr := hex.EncodeToString(result[:])
-		fmt.Println(strings.ToUpper(digestStr))
-		fmt.Println(securityString)
 		return strings.EqualFold(digestStr, securityString)
 	})
 
@@ -59,10 +57,12 @@ func CreateSession(ip string, securityString string) (session Session, err error
 
 	session.stream = conn
 	session.Handlers.status = 0
+	session.Users = make(map[uintptr]User)
+	session.Channels = make(map[uintptr]Channel)
 	return
 }
 
-func (session Session) listen() (output []interface{}, err error) {
+func (session Session) listen() (t int, output interface{}, err error) {
 	twoBytes := make([]byte, 2)
 	_, err = session.stream.Read(twoBytes)
 	if err != nil {
@@ -76,7 +76,8 @@ func (session Session) listen() (output []interface{}, err error) {
 		err = errors.New("Reading from stream failed, " + err.Error())
 		return
 	}
-	err = msgpack.Unmarshal(inputBytes, &output)
+	fmt.Println("Received:", inputBytes)
+	t, output, err = processMsgpack(inputBytes)
 	if err != nil {
 		err = errors.New("Unmarshaling content failed, " + err.Error())
 		return
@@ -86,36 +87,20 @@ func (session Session) listen() (output []interface{}, err error) {
 
 func (session *Session) liveRunner() {
 	if session.Handlers.status > 0 {
-		data, err := session.listen()
+		t, data, err := session.listen()
 		if err != nil {
 			panic(err)
 		}
-		switch findPacket(data[0]) {
+		switch findPacket(t) {
 		case "error":
-			err = errors.New(findError(data[1].([]interface{})[0].(int8)))
+			err = errors.New(findError(data.(int)))
 			panic(err)
 		case "userReceive":
-			deeper := data[1].([]interface{})[0].([]interface{})
-			admin, _ := deeper[0].(bool)
-			ban, _ := deeper[1].(bool)
-			bot, _ := deeper[2].(bool)
-			id, _ := deeper[3].(uintptr)
-			nodes, _ := deeper[4].(map[uintptr]uint8)
-			name, _ := deeper[5].(string)
-			session.Users[id] = User{
-				Admin: admin,
-				Ban:   ban,
-				Bot:   bot,
-				ID:    id,
-				Nodes: nodes,
-				Name:  name,
-			}
-			structy := UserReceive{
-				Inner: session.Users[id],
-			}
-			session.runHandler("UR", structy)
+			data := data.(UserReceive)
+			session.Users[data.Inner.ID] = data.Inner
+			session.runHandler("UR", data)
 		}
-		fmt.Println(data)
+		fmt.Println(t, data)
 	}
 }
 
@@ -128,11 +113,6 @@ func (session *Session) runHandler(t string, handler interface{}) {
 		}
 	}
 
-}
-
-// Close closes an Session
-func (session *Session) Close() {
-	session.stream.Close()
 }
 
 // AddHandler adds a handler
@@ -171,7 +151,6 @@ func (session Session) Write(input []byte) (written int, err error) {
 		err = errors.New("writing error" + err.Error())
 		return
 	}
-	fmt.Println(input)
 	written, err = session.stream.Write(input)
 	if err != nil {
 		err = errors.New("writing error" + err.Error())
@@ -181,7 +160,7 @@ func (session Session) Write(input []byte) (written int, err error) {
 }
 
 func packIt(structy interface{}, typey int) Wrapper {
-	return Wrapper{typey, Wrapping{structy}}
+	return Wrapper{typey, struct{ Content interface{} }{structy}}
 }
 
 // Login logs you in Synac
@@ -193,11 +172,10 @@ func (session *Session) Login(bot bool, name string, password string, token stri
 		Token:    token,
 	}
 	packet := packIt(lg, findRPacket("login"))
-	fmt.Println(packet)
+	fmt.Println("Sent:", packet)
 	var buf bytes.Buffer
 	enc := msgpack.NewEncoder(&buf).StructAsArray(true)
 	err = enc.Encode(&packet)
-	fmt.Println(buf.Bytes())
 	if err != nil {
 		return
 	}
@@ -205,20 +183,20 @@ func (session *Session) Login(bot bool, name string, password string, token stri
 	if err != nil {
 		return
 	}
-	logins, err := session.listen()
+	t, logins, err := session.listen()
 	if err != nil {
 		return
 	}
-	switch findPacket(logins[0]) {
+	fmt.Println(findPacket(t))
+	switch findPacket(t) {
 	case "loginSuccess":
-		deeper := logins[1].([]interface{})[0].([]interface{})
-		created = deeper[0].(bool)
-		id, _ := deeper[1].(uintptr)
-		tokenO = deeper[2].(string)
-		session.ID = id
+		data := logins.(LoginSuccess)
+		created = data.Created
+		tokenO = data.Token
+		session.ID = data.ID
 		session.Handlers.status = 1
 	case "error":
-		err = errors.New(findError(logins[1].([]interface{})[0].(int8)))
+		err = errors.New(findError(logins.(int)))
 	default:
 		err = errors.New("Something unkown happened.")
 	}

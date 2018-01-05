@@ -178,15 +178,12 @@ type Session struct {
 	Handlers
 }
 
-// Wrapping because Go really sucks
-type Wrapping struct {
-	Content interface{}
-}
-
 // Wrapper because Go sucks
 type Wrapper struct {
 	Type    int
-	Content Wrapping
+	Content struct {
+		Content interface{}
+	}
 }
 
 func initialize() {
@@ -230,8 +227,8 @@ func initialize() {
 	rpackets["messageDeleteReceive"] = 20
 	rpackets["messageListReceived"] = 21
 	rpackets["messageReceive"] = 22
-	rpackets["typingReceive"] = 23
-	rpackets["userReceive"] = 24
+	rpackets["typingReceive"] = 24
+	rpackets["userReceive"] = 23
 
 	for k, v := range rpackets {
 		packets[v] = k
