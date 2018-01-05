@@ -216,18 +216,17 @@ func initialize() {
 	rpackets["messageDeleteBulk"] = 10
 	rpackets["messageList"] = 11
 	rpackets["messageUpdate"] = 12
-	rpackets["privateMessage"] = 13
-	rpackets["typing"] = 14
-	rpackets["userUpdate"] = 15
+	rpackets["typing"] = 13
+	rpackets["userUpdate"] = 14
 
-	rpackets["channelDeleteReceive"] = 16
-	rpackets["channelReceive"] = 17
-	rpackets["commandReceive"] = 19
+	rpackets["channelDeleteReceive"] = 15
+	rpackets["channelReceive"] = 16
+	rpackets["commandReceive"] = 17
 	rpackets["loginSuccess"] = 18
-	rpackets["messageDeleteReceive"] = 20
-	rpackets["messageListReceived"] = 21
-	rpackets["messageReceive"] = 22
-	rpackets["typingReceive"] = 24
+	rpackets["messageDeleteReceive"] = 19
+	rpackets["messageListReceived"] = 20
+	rpackets["messageReceive"] = 21
+	rpackets["typingReceive"] = 22
 	rpackets["userReceive"] = 23
 
 	for k, v := range rpackets {
